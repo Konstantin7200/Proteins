@@ -1,110 +1,116 @@
 
-namespace Hueta
+namespace Proteins
 {
-    class Program {
-        static void Main(string[] args)
-        {
-            Console.WriteLine("Андрей!!!");
-            Protein protein = new Protein("h", "a", "BBBBBCCCCC");
-            Protein protein1 = new Protein("ajs", "aks", "ABBBA");
-            Console.WriteLine(protein.diff(protein1));
-        }
- }
-
-    class InputHandler
+    interface IHandleInput
     {
-        string fileName;
-
-        Protein GetProtein()
-        {
-            File.ReadLines(fileName);
-            return null;
-        }
+        string[] handleInput(string pathname);
     }
-    class OutputHandler
+    interface IHandleLogic
+    {
+        List<Protein> search(string substr,List<Protein> AllProteins);
+        int diff(Protein protein1, Protein protein2);
+        char mode(string proteinName, List<Protein> allProteins);
+    }
+    interface IHandleOutput
     {
 
     }
-
-    class DataHandler
+    class LogicHandler
     {
-
-    }
-
-    class Protein
-    {
-        string name;
-        string species;
-        string aminoacid;
-
-        public Protein(string name, string species, string aminoacid)
+        public List<Protein> search(string substr, List<Protein> AllProteins)
         {
-            this.name = name;
-            this.species = species;
-            this.aminoacid = aminoacid;
-        }
-
-        public char mode()
-        {
-            List<char> keys=new List<char>();
-            Dictionary<char, int> dict=new Dictionary<char, int>();
-            for (int i = 0; i < aminoacid.Length; i++)
+            List<Protein> proteins = new List<Protein>();
+            for (int i = 0; i < AllProteins.Count; i++)
             {
-                if (dict.Keys.Contains(aminoacid[i]))
-                {
-                    dict[aminoacid[i]]++;
-                }
-                else 
-                { 
-                    dict.Add(aminoacid[i], 1);
-                    keys.Add(aminoacid[i]);
-                }
+                if (AllProteins[i].getAminoacid().Contains(substr))
+                    proteins.Add(AllProteins[i]);
             }
-            int MAX = dict.Values.Max();
-            char maxLetter='Z';
-            for(int i=0;i<keys.Count;i++)
-            {
-                if (MAX == dict[keys[i]] && keys[i]<maxLetter)
-                {
-                    maxLetter = keys[i];
-                }
-            }
-            return maxLetter;
-            
+            return proteins;
         }
-        public bool search()
+        public int diff(Protein protein1, Protein protein2)
         {
-
-
-            return false;
-        }
-        public int diff(Protein another)
-        {
-            int length;
-            int count=0;
-            if (aminoacid.Length < another.aminoacid.Length)
-                length = aminoacid.Length;
-            else length = another.aminoacid.Length;
-            for(int i=0;i<length;i++)
-            {
-                if (aminoacid[i] != another.aminoacid[i])
-                {
+            string aminoacid1 = protein1.getAminoacid();
+            string aminoacid2 = protein2.getAminoacid();
+            int count=Math.Abs(aminoacid1.Length-aminoacid2.Length);
+            int length = aminoacid1.Length < aminoacid2.Length ? aminoacid1.Length :aminoacid2.Length;
+            for (int i = 0; i < length; i++)
+                if (aminoacid1[i] != aminoacid2[i])
                     count++;
-                }    
-            }
-            count += Math.Abs(aminoacid.Length - another.aminoacid.Length);
             return count;
         }
 
-    }
+        public char mode(string proteinName,List<Protein> allProteins)
+        {
+            string aminoacid="";
+            Dictionary<char, int> dict = new Dictionary<char, int>();
+            foreach(Protein protein in allProteins)
+            {
+                if(protein.getName()==proteinName)
+                {
+                    aminoacid = protein.getAminoacid();
+                    break;
+                }
+            }
+            for(int i=0;i<aminoacid.Length;i++)
+            {
+                aminoacid.ToDictionary
+            }
 
-    class Proteins
+            return ' ';
+        }
+    }
+    class InputHandler : IHandleInput
     {
-        List<Protein> proteins;
-
-        
+        public string[] handleInput(string pathname)
+        {
+            string allText = File.ReadAllText("pathname");
+            return allText.Split();
+        }
+    }
+    class Protein
+    {
+        string name;
+        private string aminoacid;
+        string organism;
+        public string getAminoacid()
+        {
+            return aminoacid;
+        }
+        public string getName()
+        {
+            return name;
+        }
+        Protein(string args)
+        {
+            string[] splitted = args.Split("\t");
+            name = splitted[0];
+            organism = splitted[1];
+            aminoacid=decodeAminoacid(splitted[2]);
+        }
+        string decodeAminoacid(string aminoacid)
+        {
+            string result="";
+            for(int i=0;i<aminoacid.Length;i++)
+            {
+                if (aminoacid[i] - 48 < 10)
+                {
+                    i++;
+                    result += aminoacid[i] * aminoacid[i - 1];
+                }
+                else result += aminoacid[i];
+            }
+            return result;
+        }
     }
 
+    class Program
+    {
+        public static void Main()
+        {
+            
+        }
+    }
+
+
+    
 }
-
-
