@@ -7,26 +7,23 @@ namespace Proteins
     {
         string[] handleInput(string pathname);
     }
-    interface IHandleLogic
-    {
-        List<Protein> search(string substr,List<Protein> allProteins);
-        int diff(Protein protein1, Protein protein2);
-        char mode(string proteinName, List<Protein> allProteins);
-    }
-    interface IHandleOutput
-    {
-        
-    }
     class OutputHandler
     {
-        void output(string command, int commandNum, string result)
+        static string pathname = "genedata.txt";
+        static public void ClearFile()
         {
-            string pathname = "genedata.txt";
+           File.Delete(pathname);
+        }
+         static public void output(string command, int commandNum, string result)
+        {
+            
+            StreamWriter writer = File.AppendText(pathname);
             string splitter = "-------------------------------------\n";
-            File.WriteAllText(pathname, splitter);
-            File.WriteAllText(pathname, "00" + commandNum + "\t" + command + "\n");
-            File.WriteAllText(pathname, result);
-            File.WriteAllText(pathname, splitter);
+            writer.WriteLine(splitter);
+            writer.WriteLine("00" + commandNum + "\t" + command + "\n");
+            writer.WriteLine(result);
+            writer.WriteLine(splitter);
+            writer.Close();
         }
     }
     class LogicHandler
@@ -53,7 +50,7 @@ namespace Proteins
             return count;
         }
 
-        static public char mode(string proteinName,List<Protein> allProteins)
+        static public (char,int) mode(string proteinName,List<Protein> allProteins)
         {
             string aminoacid="";
             Dictionary<char, int> dict = new Dictionary<char, int>();
@@ -68,7 +65,7 @@ namespace Proteins
             for(int i=0;i<aminoacid.Length;i++)
             {
                 if (!dict.Keys.Contains(aminoacid[i]))
-                    dict.Add(aminoacid[i], 0);
+                    dict.Add(aminoacid[i], 1);
                 else dict[aminoacid[i]]++;
             }
             int max = dict.Values.Max();
@@ -79,7 +76,7 @@ namespace Proteins
                     result = symbol;
             }
 
-            return result;
+            return (result,max);
         }
     }
 
@@ -93,7 +90,7 @@ namespace Proteins
                 result+= "NOT FOUND/n";
             for(int i=0;i<allProteins.Count;i++)
             {
-                result += allProteins[i].getOrganism + "                 " + allProteins[i].getAminoacid() + "\n";
+                result += allProteins[i].getOrganism() + "                 " + allProteins[i].getAminoacid() + "\n";
             }
             return result;
         }
@@ -118,10 +115,14 @@ namespace Proteins
             }
             return result;
         }
-        public static string formFromMode()
+        public static string formFromMode(char symbol,int max)
         {
-            string result="";
+            string result= "amino-acids occurs:\n";
 
+            if (max == -1)
+                result += "Missing\n";
+            else
+                result += symbol + "                 " + max + "\n";
 
 
             return result;
@@ -131,37 +132,39 @@ namespace Proteins
 
     class CommandCenter
     {
-        public void analyzeCommand(string commandString,List<Protein> allProteins)
+        public string analyzeCommand(string commandString,List<Protein> allProteins)
         {
             string[] command = commandString.Split('\t');
-            if (command[0]=="search")
+            if (command[0] == "search")
             {
-                LogicHandler.search(Protein.decodeAminoacid(command[1]), allProteins);
+                return (ResultFormer.formFromSearch(LogicHandler.search(Protein.decodeAminoacid(command[1]), allProteins)));
             }
-            else if (command[0]=="diff")
+            else if (command[0] == "diff")
             {
                 string name1 = command[1];
                 string name2 = command[2];
-                Protein protein1=null, protein2=null;
+                Protein protein1 = null, protein2 = null;
                 foreach (Protein protein in allProteins)
                 {
-                    if(protein.getName()==name1)
+                    if (protein.getName() == name1)
                     {
                         protein1 = protein;
                     }
-                    else if(protein.getName()==name2)
+                    else if (protein.getName() == name2)
                     {
                         protein2 = protein;
                     }
                 }
-                if(protein1!=null&&protein2!=null)
-                LogicHandler.diff(protein1, protein2);
+                if (protein1 != null && protein2 != null)
+                    return ResultFormer.formFromDiff(LogicHandler.diff(protein1, protein2), name1, name2);
             }
 
             else if (command[0] == "mode")
             {
-                LogicHandler.mode(command[1], allProteins);
+                (char, int) tuple = LogicHandler.mode(command[1], allProteins);
+                return ResultFormer.formFromMode(tuple.Item1, tuple.Item2);
             }
+            return "";
         }
     }
     class InputHandler : IHandleInput
@@ -218,6 +221,7 @@ namespace Proteins
     {
         public static void Main()
         {
+            OutputHandler.ClearFile();
             InputHandler inputHandler = new InputHandler();
             string[] proteins = inputHandler.handleInput("sequences.0.txt");
             string[] commands=inputHandler.handleInput("commands.0.txt");
@@ -228,10 +232,25 @@ namespace Proteins
                 allProteins.Add(new Protein(proteins[i]));
             }
             CommandCenter commandCenter = new CommandCenter();
-            for(int i=0;i<commands.Length;i++)
-                commandCenter.analyzeCommand(commands[i], allProteins);
+            for(int i=0;i<commands.Length-1;i++)
+                OutputHandler.output(commands[i],i+1,commandCenter.analyzeCommand(commands[i], allProteins));
 
         }
     }
 
+
+    /*
+     Нужно 
+    считать протеины 
+    записать их куда то
+    считать команды
+    поочередно их выполнять
+    записывать результат в файл
+
+    классы
+    инпут хендлер. Считывает команды и протеины.Возвращает массив строк.Принимает пути
+    лоджик хэндлер . Получает строку с командой,анализирует какая это команда и запускает ее
+    протеин.Получает строку и вовращает обьект
+    оутпут хендлер.Получает строку с командой и результат выполнения
+     */
 }
